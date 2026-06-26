@@ -1,0 +1,139 @@
+# CD — Déploiement Continu
+# Déclenché uniquement après un CI réussi sur main (workflow_run).
+#
+# Flux :
+#   1. Build & push des images Docker vers GHCR (GitHub Container Registry)
+#   2. Déploiement automatique en pré-prod
+#   3. Déploiement en prod — BLOQUÉ par un gate manuel (approbation humaine requise)
+#
+# ⚠️  Pour activer le gate prod :
+#     GitHub > Settings > Environments > production > Required reviewers
+#     Ajouter les reviewers autorisés à approuver.
+
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]           # Ne se déclenche que si le workflow "CI" est passé
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write             # Nécessaire pour pousser sur GHCR
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/ecommerce
+
+jobs:
+  # ── Garde : vérifie que le CI s'est terminé avec succès ────────────────────
+  check-ci:
+    name: Verify CI success
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - run: echo "CI passed — proceeding with deployment"
+
+  # ── Job 1 : Build & push des images vers GHCR ──────────────────────────────
+  publish-images:
+    name: Publish Docker images
+    runs-on: ubuntu-latest
+    needs: check-ci
+
+    strategy:
+      matrix:
+        service:
+          - name: catalog
+            dockerfile: src/ECommerce.Catalog.Api/Dockerfile
+          - name: ordering
+            dockerfile: src/ECommerce.Ordering.Api/Dockerfile
+          - name: gateway
+            dockerfile: src/ECommerce.Gateway/Dockerfile
+          - name: web
+            dockerfile: src/ECommerce.Web/Dockerfile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Connexion au GitHub Container Registry avec le token automatique
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}   # Token généré automatiquement par GitHub
+
+      # Génère les tags de l'image : tag du commit SHA + tag "latest"
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service.name }}
+          tags: |
+            type=sha,prefix=sha-
+            type=raw,value=latest
+
+      # Build et push vers GHCR
+      - name: Build & push — ${{ matrix.service.name }}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.service.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── Job 2 : Déploiement pré-prod (automatique) ─────────────────────────────
+  deploy-staging:
+    name: Deploy to staging
+    runs-on: ubuntu-latest
+    needs: publish-images
+    environment: staging      # Environnement GitHub (pas de gate ici — automatique)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Remplace ce step par la commande réelle de déploiement :
+      # kubectl set image, helm upgrade, docker compose pull && up, ssh + docker pull, etc.
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging..."
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-catalog:sha-${{ github.sha }}"
+          # Exemple kubectl :
+          # kubectl set image deployment/catalog catalog=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-catalog:sha-${{ github.sha }}
+          echo "Staging deployment complete"
+
+      # Vérifie que /health répond 200 après le déploiement
+      - name: Health check staging
+        run: |
+          echo "Health check would run here"
+          # Exemple : curl --fail --retry 5 --retry-delay 5 https://staging.example.com/catalog/health
+
+  # ── Job 3 : Déploiement prod (gate manuel obligatoire) ─────────────────────
+  deploy-production:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment: production   # ⚠️ Ce job est BLOQUÉ jusqu'à approbation humaine dans GitHub
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production..."
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-catalog:sha-${{ github.sha }}"
+          # Même commande que staging, mais vers le cluster/serveur de production
+          echo "Production deployment complete"
+
+      - name: Health check production
+        run: |
+          echo "Health check would run here"
+          # Exemple : curl --fail --retry 5 --retry-delay 5 https://prod.example.com/catalog/health
