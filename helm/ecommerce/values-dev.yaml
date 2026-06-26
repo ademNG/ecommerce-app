@@ -1,0 +1,14 @@
+# Surcharges dev — cluster k3d local
+# Les images sont importées avec : k3d image import <image> -c ecommerce
+# Commande de déploiement :
+#   helm upgrade --install ecommerce helm/ecommerce -n ecommerce --create-namespace -f helm/ecommerce/values-dev.yaml
+
+global:
+  imageTag: latest
+  imagePullPolicy: Never
+  aspnetcoreEnvironment: Development
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3

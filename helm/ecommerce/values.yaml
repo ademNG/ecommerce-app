@@ -1,0 +1,78 @@
+# Valeurs par défaut — environnement dev (k3d local)
+global:
+  imageRegistry: ""        # vide = image locale importée via k3d
+  imageTag: latest
+  imagePullPolicy: Never   # images locales k3d, pas de registry pull
+  aspnetcoreEnvironment: Development
+
+# Chaque service partage le même schéma.
+# env contient les variables de service discovery Aspire.
+services:
+  catalog:
+    image: ecommerce-app-catalog
+    port: 8080
+    replicas: 1
+    env: {}
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "500m"
+        memory: "256Mi"
+
+  ordering:
+    image: ecommerce-app-ordering
+    port: 8080
+    replicas: 1
+    env:
+      services__catalog__http__0: "http://catalog:8080"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "500m"
+        memory: "256Mi"
+
+  gateway:
+    image: ecommerce-app-gateway
+    port: 8080
+    replicas: 1
+    env:
+      services__catalog__http__0: "http://catalog:8080"
+      services__ordering__http__0: "http://ordering:8080"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "500m"
+        memory: "256Mi"
+
+  web:
+    image: ecommerce-app-web
+    port: 8080
+    replicas: 1
+    env:
+      services__gateway__http__0: "http://gateway:8080"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "500m"
+        memory: "256Mi"
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  cpuTargetUtilization: 70
+
+ingress:
+  enabled: true
+  className: traefik
+  host: ""    # vide = règle sans host (accepte tout)
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web

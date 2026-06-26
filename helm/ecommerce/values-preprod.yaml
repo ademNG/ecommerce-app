@@ -1,0 +1,59 @@
+# Surcharges preprod — cluster K8s distant, images depuis GHCR
+# Le tag est injecté au deploy : --set global.imageTag=$GITHUB_SHA
+# Commande de déploiement :
+#   helm upgrade --install ecommerce helm/ecommerce -n ecommerce --create-namespace \
+#     -f helm/ecommerce/values-preprod.yaml \
+#     --set global.imageTag=$GITHUB_SHA
+
+global:
+  imageRegistry: ghcr.io/ademng   # owner GitHub en minuscules (exigence GHCR)
+  imageTag: latest                 # remplacé par --set global.imageTag=$SHA en CI/CD
+  imagePullPolicy: IfNotPresent
+  aspnetcoreEnvironment: Production
+
+services:
+  catalog:
+    replicas: 2
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "1000m"
+        memory: "512Mi"
+  ordering:
+    replicas: 2
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "1000m"
+        memory: "512Mi"
+  gateway:
+    replicas: 2
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "1000m"
+        memory: "512Mi"
+  web:
+    replicas: 2
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "1000m"
+        memory: "512Mi"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  cpuTargetUtilization: 60
+
+ingress:
+  host: ecommerce.preprod.local
