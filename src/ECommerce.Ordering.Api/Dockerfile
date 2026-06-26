@@ -13,7 +13,7 @@ RUN dotnet restore src/ECommerce.Ordering.Api/ECommerce.Ordering.Api.csproj
 COPY src/ECommerce.Ordering.Api/ src/ECommerce.Ordering.Api/
 COPY src/ECommerce.ServiceDefaults/ src/ECommerce.ServiceDefaults/
 RUN dotnet publish src/ECommerce.Ordering.Api/ECommerce.Ordering.Api.csproj \
-    --configuration Release --no-restore -o /app/publish
+    --configuration Release -o /app/publish
 
 # ---- Étape 2 : image finale (runtime chiselé, non-root) ----
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled AS final
