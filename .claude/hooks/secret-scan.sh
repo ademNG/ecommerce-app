@@ -21,7 +21,8 @@ fi
 patterns='(password|passwd|secret|api[_-]?key|token|BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|connectionstring|aws_secret_access_key)'
 
 # Scanne les fichiers indexés
-hits="$(git diff --cached -U0 2>/dev/null | grep -iE "^\+.*$patterns" || true)"
+# Exclut les références GitHub Actions (${{ secrets.* }}) qui ne sont pas des secrets en clair
+hits="$(git diff --cached -U0 2>/dev/null | grep -iE "^\+.*$patterns" | grep -v '\$\{\{[^}]*secrets\.' || true)"
 
 if [ -n "$hits" ]; then
   echo "⛔ COMMIT BLOQUÉ par le hook secret-scan : un secret potentiel a été détecté." >&2
