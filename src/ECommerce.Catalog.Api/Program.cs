@@ -16,6 +16,10 @@ var app = builder.Build();
 // Aspire default endpoints (/health, /alive).
 app.MapDefaultEndpoints();
 
+app.MapGet("/api/health", () => Results.Ok(new { status = "healthy" }))
+   .WithTags("Health")
+   .ExcludeFromDescription();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
