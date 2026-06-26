@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/ECommerce.Catalog.Api.Tests/ECommerce.Catalog.Api.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/ECommerce.AppHost/ECommerce.AppHost.csproj" />
     <Project Path="src/ECommerce.Catalog.Api/ECommerce.Catalog.Api.csproj" />

@@ -15,4 +15,8 @@
     <ProjectReference Include="..\ECommerce.ServiceDefaults\ECommerce.ServiceDefaults.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="ECommerce.Catalog.Api.Tests" />
+  </ItemGroup>
+
 </Project>
