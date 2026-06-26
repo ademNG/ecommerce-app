@@ -1,0 +1,61 @@
+# docker-compose.yml — stack ecommerce complète (dev local)
+#
+# Démarrer  : docker compose up --build
+# Arrêter   : docker compose down
+# Logs      : docker compose logs -f <service>
+#
+# Seul le frontend Web est exposé à l'hôte (port 8080).
+# Les API restent sur le réseau interne "ecommerce".
+
+services:
+
+  # ── Catalog API ─────────────────────────────────────────────────────────────
+  catalog:
+    build:
+      context: .
+      dockerfile: src/ECommerce.Catalog.Api/Dockerfile
+    networks: [ecommerce]
+    # Aucune variable supplémentaire : pas de dépendances inter-services.
+
+  # ── Ordering API ─────────────────────────────────────────────────────────────
+  ordering:
+    build:
+      context: .
+      dockerfile: src/ECommerce.Ordering.Api/Dockerfile
+    environment:
+      # Remplace le service discovery Aspire "https+http://catalog".
+      # Format : services__{resourceName}__{scheme}__{index}
+      - services__catalog__http__0=http://catalog:8080
+    depends_on: [catalog]
+    networks: [ecommerce]
+
+  # ── Gateway (YARP reverse proxy) ─────────────────────────────────────────────
+  gateway:
+    build:
+      context: .
+      dockerfile: src/ECommerce.Gateway/Dockerfile
+    environment:
+      # YARP résout ses destinations "https+http://catalog" et "https+http://ordering"
+      # via le même mécanisme de service discovery Aspire.
+      - services__catalog__http__0=http://catalog:8080
+      - services__ordering__http__0=http://ordering:8080
+    depends_on: [catalog, ordering]
+    networks: [ecommerce]
+
+  # ── Web (Blazor frontend) ────────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: src/ECommerce.Web/Dockerfile
+    environment:
+      # Le frontend appelle tout via le gateway ("https+http://gateway").
+      - services__gateway__http__0=http://gateway:8080
+    depends_on: [gateway]
+    ports:
+      - "8080:8080"   # seul service exposé à l'hôte
+    networks: [ecommerce]
+
+# Réseau isolé : les conteneurs se joignent par leur nom de service.
+networks:
+  ecommerce:
+    driver: bridge
