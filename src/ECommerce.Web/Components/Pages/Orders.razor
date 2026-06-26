@@ -1,0 +1,53 @@
+@page "/orders"
+@using ECommerce.Web.Services
+@inject OrderingApiClient Ordering
+@rendermode InteractiveServer
+
+<PageTitle>Orders</PageTitle>
+
+<h1>Orders</h1>
+
+<button class="btn btn-sm btn-outline-secondary mb-3" @onclick="Load">Refresh</button>
+
+@if (_orders is null)
+{
+    <p><em>Loading orders…</em></p>
+}
+else if (_orders.Count == 0)
+{
+    <p><em>No orders yet. Place one from the <a href="/products">Catalog</a> page.</em></p>
+}
+else
+{
+    @foreach (var order in _orders)
+    {
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <span><strong>Order #@order.Id</strong> — @order.Customer</span>
+                <span class="badge bg-info text-dark">@order.Status</span>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Placed @order.CreatedAt.LocalDateTime</p>
+                <ul>
+                    @foreach (var item in order.Items)
+                    {
+                        <li>@item.Quantity × @item.ProductName @@ @item.UnitPrice.ToString("C")</li>
+                    }
+                </ul>
+                <strong>Total: @order.Total.ToString("C")</strong>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private IReadOnlyList<OrderDto>? _orders;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        _orders = null;
+        _orders = await Ordering.GetOrdersAsync();
+    }
+}
