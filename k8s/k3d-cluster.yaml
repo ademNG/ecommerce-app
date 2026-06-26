@@ -1,0 +1,35 @@
+# k3d cluster config — ecommerce dev cluster
+# Créer  : k3d cluster create --config k8s/k3d-cluster.yaml
+# Détruire: k3d cluster delete ecommerce  ← confirmation humaine requise
+
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+
+metadata:
+  name: ecommerce
+
+# 1 serveur (control-plane) + 2 agents = 3 nœuds
+servers: 1
+agents: 2
+
+# Registre local — pousser : docker push registry.localhost:5000/<image>
+registries:
+  create:
+    name: registry.localhost
+    host: "0.0.0.0"
+    hostPort: "5000"
+
+# Traefik (ingress) activé par défaut dans k3s.
+# Port 80 de l'hôte → ingress controller du cluster.
+ports:
+  - port: 8888:80
+    nodeFilters:
+      - loadbalancer
+
+options:
+  k3s:
+    extraArgs:
+      # Désactive les composants inutiles en dev pour alléger le cluster.
+      - arg: --disable=servicelb
+        nodeFilters:
+          - server:*
