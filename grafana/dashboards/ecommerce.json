@@ -1,0 +1,162 @@
+{
+  "title": "Ecommerce Dashboard",
+  "uid": "ecommerce-main",
+  "version": 1,
+  "schemaVersion": 38,
+  "refresh": "30s",
+  "time": { "from": "now-30d", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Chiffre d'affaires total",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "uid": "postgres-reporting" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "color": { "mode": "fixed", "fixedColor": "green" }
+        }
+      },
+      "targets": [{
+        "rawSql": "SELECT SUM(line_total) AS \"Chiffre d'affaires\" FROM fact_orders WHERE order_status != 'Cancelled'",
+        "format": "table",
+        "refId": "A"
+      }]
+    },
+    {
+      "id": 2,
+      "title": "Nombre de commandes",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "uid": "postgres-reporting" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "blue" }
+        }
+      },
+      "targets": [{
+        "rawSql": "SELECT COUNT(DISTINCT order_id) AS \"Commandes\" FROM fact_orders",
+        "format": "table",
+        "refId": "A"
+      }]
+    },
+    {
+      "id": 3,
+      "title": "Produits en catalogue",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "uid": "postgres-reporting" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "purple" }
+        }
+      },
+      "targets": [{
+        "rawSql": "SELECT COUNT(*) AS \"Produits\" FROM dim_products",
+        "format": "table",
+        "refId": "A"
+      }]
+    },
+    {
+      "id": 4,
+      "title": "Panier moyen",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "uid": "postgres-reporting" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 2,
+          "color": { "mode": "fixed", "fixedColor": "orange" }
+        }
+      },
+      "targets": [{
+        "rawSql": "SELECT ROUND(AVG(order_total)::numeric, 2) AS \"Panier moyen\" FROM (SELECT order_id, SUM(line_total) AS order_total FROM fact_orders WHERE order_status != 'Cancelled' GROUP BY order_id) t",
+        "format": "table",
+        "refId": "A"
+      }]
+    },
+    {
+      "id": 5,
+      "title": "Répartition des statuts de commandes",
+      "type": "piechart",
+      "gridPos": { "x": 0, "y": 4, "w": 8, "h": 8 },
+      "datasource": { "uid": "postgres-reporting" },
+      "options": { "legendDisplayMode": "table", "placement": "right" },
+      "targets": [{
+        "rawSql": "SELECT order_status AS \"Statut\", COUNT(DISTINCT order_id) AS \"Commandes\" FROM fact_orders GROUP BY order_status ORDER BY \"Commandes\" DESC",
+        "format": "table",
+        "refId": "A"
+      }]
+    },
+    {
+      "id": 6,
+      "title": "Top 5 produits les plus vendus",
+      "type": "barchart",
+      "gridPos": { "x": 8, "y": 4, "w": 16, "h": 8 },
+      "datasource": { "uid": "postgres-reporting" },
+      "options": {
+        "orientation": "horizontal",
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [{
+        "rawSql": "SELECT product_name AS \"Produit\", SUM(quantity) AS \"Qté vendue\", ROUND(SUM(line_total)::numeric, 2) AS \"CA (€)\" FROM fact_orders WHERE order_status != 'Cancelled' GROUP BY product_name ORDER BY \"Qté vendue\" DESC LIMIT 5",
+        "format": "table",
+        "refId": "A"
+      }]
+    },
+    {
+      "id": 7,
+      "title": "Chiffre d'affaires par client",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "uid": "postgres-reporting" },
+      "options": { "sortBy": [{ "displayName": "CA Total (€)", "desc": true }] },
+      "fieldConfig": {
+        "overrides": [{
+          "matcher": { "id": "byName", "options": "CA Total (€)" },
+          "properties": [{ "id": "unit", "value": "currencyEUR" }]
+        }]
+      },
+      "targets": [{
+        "rawSql": "SELECT customer_name AS \"Client\", COUNT(DISTINCT order_id) AS \"Commandes\", ROUND(SUM(line_total)::numeric, 2) AS \"CA Total (€)\" FROM fact_orders WHERE order_status != 'Cancelled' GROUP BY customer_name ORDER BY \"CA Total (€)\" DESC",
+        "format": "table",
+        "refId": "A"
+      }]
+    },
+    {
+      "id": 8,
+      "title": "Détail des commandes récentes",
+      "type": "table",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "uid": "postgres-reporting" },
+      "targets": [{
+        "rawSql": "SELECT order_id AS \"#\", customer_name AS \"Client\", order_date AS \"Date\", order_status AS \"Statut\", ROUND(SUM(line_total)::numeric, 2) AS \"Total (€)\" FROM fact_orders GROUP BY order_id, customer_name, order_date, order_status ORDER BY order_date DESC, order_id DESC LIMIT 20",
+        "format": "table",
+        "refId": "A"
+      }]
+    }
+  ]
+}

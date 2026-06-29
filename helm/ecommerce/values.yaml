@@ -1,8 +1,9 @@
 # Valeurs par défaut — environnement dev (k3d local)
 global:
-  imageRegistry: ""        # vide = image locale importée via k3d
+  imageRegistry: ""            # vide = image locale importée via k3d
   imageTag: latest
-  imagePullPolicy: Never   # images locales k3d, pas de registry pull
+  imagePullPolicy: Never       # images locales k3d, pas de registry pull
+  imagePullSecretName: ""      # vide = pas de secret (dev local) ; renseigner en preprod
   aspnetcoreEnvironment: Development
 
 # Chaque service partage le même schéma.

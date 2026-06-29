@@ -7,13 +7,21 @@
 
 global:
   imageRegistry: ghcr.io/ademng   # owner GitHub en minuscules (exigence GHCR)
-  imageTag: latest                 # remplacé par --set global.imageTag=$SHA en CI/CD
-  imagePullPolicy: IfNotPresent
-  aspnetcoreEnvironment: Production
+  imageTag: ""                     # OBLIGATOIRE — injecter via --set global.imageTag=$GITHUB_SHA
+  imagePullPolicy: Always          # Always car le tag SHA est unique à chaque build
+  imagePullSecretName: ghcr-pull-secret  # kubectl create secret docker-registry ghcr-pull-secret ...
+  # Fix #1 : garder Development tant que feat/health-endpoint n'est pas mergé dans main.
+  # /health et /alive sont enregistrés sous IsDevelopment() dans ServiceDefaults/Extensions.cs.
+  # Repasser à Production après merge de PR #1.
+  aspnetcoreEnvironment: Development
 
 services:
+  # Fix #5 : répéter image/port/env ici pour éviter la perte de clés avec --reset-values.
   catalog:
+    image: ecommerce-app-catalog
+    port: 8080
     replicas: 2
+    env: {}
     resources:
       requests:
         cpu: "200m"
@@ -22,7 +30,11 @@ services:
         cpu: "1000m"
         memory: "512Mi"
   ordering:
+    image: ecommerce-app-ordering
+    port: 8080
     replicas: 2
+    env:
+      services__catalog__http__0: "http://catalog:8080"
     resources:
       requests:
         cpu: "200m"
@@ -31,7 +43,12 @@ services:
         cpu: "1000m"
         memory: "512Mi"
   gateway:
+    image: ecommerce-app-gateway
+    port: 8080
     replicas: 2
+    env:
+      services__catalog__http__0: "http://catalog:8080"
+      services__ordering__http__0: "http://ordering:8080"
     resources:
       requests:
         cpu: "200m"
@@ -40,7 +57,11 @@ services:
         cpu: "1000m"
         memory: "512Mi"
   web:
+    image: ecommerce-app-web
+    port: 8080
     replicas: 2
+    env:
+      services__gateway__http__0: "http://gateway:8080"
     resources:
       requests:
         cpu: "200m"

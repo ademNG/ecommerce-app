@@ -27,5 +27,5 @@ spec:
               service:
                 name: web
                 port:
-                  number: 8080
+                  number: {{ (index $.Values.services "web").port }}
 {{- end }}

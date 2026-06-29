@@ -1,15 +1,14 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace ECommerce.Catalog.Api.Tests;
 
-public class ProductsEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public class ProductsEndpointTests : IClassFixture<CatalogApiFactory>
 {
     private readonly HttpClient _client;
 
-    public ProductsEndpointTests(WebApplicationFactory<Program> factory)
+    public ProductsEndpointTests(CatalogApiFactory factory)
     {
         _client = factory.CreateClient();
     }

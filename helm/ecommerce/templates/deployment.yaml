@@ -10,7 +10,9 @@ metadata:
     chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
     release: {{ $.Release.Name }}
 spec:
+  {{- if not $.Values.autoscaling.enabled }}
   replicas: {{ $svc.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app: {{ $name }}
@@ -20,10 +22,22 @@ spec:
         app: {{ $name }}
         release: {{ $.Release.Name }}
     spec:
+      {{- if $.Values.global.imagePullSecretName }}
+      imagePullSecrets:
+        - name: {{ $.Values.global.imagePullSecretName }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: {{ $name }}
           image: {{ include "ecommerce.image" (dict "svc" $svc "global" $.Values.global) }}
           imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           ports:
             - containerPort: {{ $svc.port }}
           env:
@@ -35,18 +49,25 @@ spec:
             {{- end }}
           resources:
             {{- toYaml $svc.resources | nindent 12 }}
+          startupProbe:
+            httpGet:
+              path: /alive
+              port: {{ $svc.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 6
           readinessProbe:
             httpGet:
               path: /health
               port: {{ $svc.port }}
-            initialDelaySeconds: 5
+            initialDelaySeconds: 0
             periodSeconds: 10
             failureThreshold: 3
           livenessProbe:
             httpGet:
               path: /alive
               port: {{ $svc.port }}
-            initialDelaySeconds: 15
+            initialDelaySeconds: 0
             periodSeconds: 20
             failureThreshold: 3
 {{- end }}

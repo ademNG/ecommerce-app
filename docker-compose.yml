@@ -9,13 +9,66 @@
 
 services:
 
+  # ── PostgreSQL ───────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ecommerce
+      POSTGRES_PASSWORD: ecommerce
+      POSTGRES_DB: ecommerce_db
+    ports:
+      - "5432:5432"   # exposé à l'hôte pour psql / DBeaver en dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks: [ecommerce]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecommerce -d ecommerce_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Grafana (dashboards reporting) ───────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: grafana-clock-panel
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [ecommerce]
+
+  # ── pgAdmin (interface web pour PostgreSQL) ──────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [ecommerce]
+
   # ── Catalog API ─────────────────────────────────────────────────────────────
   catalog:
     build:
       context: .
       dockerfile: src/ECommerce.Catalog.Api/Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=catalog_db;Username=ecommerce;Password=ecommerce
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks: [ecommerce]
-    # Aucune variable supplémentaire : pas de dépendances inter-services.
 
   # ── Ordering API ─────────────────────────────────────────────────────────────
   ordering:
@@ -23,10 +76,15 @@ services:
       context: .
       dockerfile: src/ECommerce.Ordering.Api/Dockerfile
     environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=ordering_db;Username=ecommerce;Password=ecommerce
       # Remplace le service discovery Aspire "https+http://catalog".
       # Format : services__{resourceName}__{scheme}__{index}
       - services__catalog__http__0=http://catalog:8080
-    depends_on: [catalog]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      catalog:
+        condition: service_started
     networks: [ecommerce]
 
   # ── Gateway (YARP reverse proxy) ─────────────────────────────────────────────
@@ -59,3 +117,7 @@ services:
 networks:
   ecommerce:
     driver: bridge
+
+volumes:
+  postgres_data:   # persistance des données entre les restarts
+  grafana_data:    # persistance des dashboards Grafana
