@@ -10,7 +10,7 @@ builder.AddServiceDefaults();
 
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<OrderingDbContext>(options =>
-    options.UseInMemoryDatabase("ordering"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Serialize enums (e.g. OrderStatus) as strings rather than integers.
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -36,7 +36,7 @@ app.MapOrderingEndpoints();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
 }
 
 app.Run();

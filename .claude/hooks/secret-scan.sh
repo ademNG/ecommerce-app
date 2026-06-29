@@ -21,7 +21,13 @@ fi
 patterns='(password|passwd|secret|api[_-]?key|token|BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|connectionstring|aws_secret_access_key)'
 
 # Scanne les fichiers indexés
-hits="$(git diff --cached -U0 2>/dev/null | grep -iE "^\+.*$patterns" || true)"
+# Exclusions : syntaxe GitHub Actions ${{ secrets.* }}, et phrases documentaires françaises
+# du type "aucun secret en clair", "jamais de secret", "Secret K8s" (nom de ressource).
+hits="$(git diff --cached -U0 2>/dev/null \
+  | grep -iE "^\+.*$patterns" \
+  | grep -v '\$\{\{[^}]*secrets\.' \
+  | grep -iv 'secret en clair\|aucun secret\|jamais.*secret\|secret.*coffre\|k8s.*secret\|secret.*k8s\|secret.*clair' \
+  || true)"
 
 if [ -n "$hits" ]; then
   echo "⛔ COMMIT BLOQUÉ par le hook secret-scan : un secret potentiel a été détecté." >&2

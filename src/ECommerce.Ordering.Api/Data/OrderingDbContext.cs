@@ -14,7 +14,10 @@ public class OrderingDbContext(DbContextOptions<OrderingDbContext> options) : Db
             entity.HasKey(o => o.Id);
             entity.Property(o => o.Customer).HasMaxLength(200).IsRequired();
             entity.Ignore(o => o.Total);
-            entity.HasMany(o => o.Items).WithOne().OnDelete(DeleteBehavior.Cascade);
+            entity.HasMany(o => o.Items)
+              .WithOne(i => i.Order)
+              .HasForeignKey(i => i.OrderId)
+              .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<OrderItem>(entity =>
