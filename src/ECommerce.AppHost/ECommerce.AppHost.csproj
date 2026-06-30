@@ -1,0 +1,18 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.4.3">
+
+  <ItemGroup>
+    <ProjectReference Include="..\ECommerce.Catalog.Api\ECommerce.Catalog.Api.csproj" />
+    <ProjectReference Include="..\ECommerce.Ordering.Api\ECommerce.Ordering.Api.csproj" />
+    <ProjectReference Include="..\ECommerce.Gateway\ECommerce.Gateway.csproj" />
+    <ProjectReference Include="..\ECommerce.Web\ECommerce.Web.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>e2273b07-816a-4277-92ec-76e6d772ad39</UserSecretsId>
+  </PropertyGroup>
+
+</Project>

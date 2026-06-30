@@ -1,0 +1,119 @@
+@page "/products"
+@using ECommerce.Web.Services
+@inject CatalogApiClient Catalog
+@inject OrderingApiClient Ordering
+@rendermode InteractiveServer
+
+<PageTitle>Catalog</PageTitle>
+
+<h1>Catalog</h1>
+
+@if (_products is null)
+{
+    <p><em>Loading products…</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Description</th>
+                <th class="text-end">Price</th>
+                <th class="text-end">Stock</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in _products)
+            {
+                <tr>
+                    <td>@p.Name</td>
+                    <td>@p.Description</td>
+                    <td class="text-end">@p.Price.ToString("C")</td>
+                    <td class="text-end">@p.AvailableStock</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => AddToCart(p)">Add</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h2>Cart</h2>
+    @if (_cart.Count == 0)
+    {
+        <p><em>Your cart is empty.</em></p>
+    }
+    else
+    {
+        <ul>
+            @foreach (var line in _cart)
+            {
+                <li>@line.Value × @line.Key.Name (@line.Key.Price.ToString("C"))</li>
+            }
+        </ul>
+
+        <div class="mb-2">
+            <label class="form-label">Customer name</label>
+            <input class="form-control" style="max-width: 320px" @bind="_customer" />
+        </div>
+        <button class="btn btn-primary" @onclick="PlaceOrder" disabled="@_placing">Place order</button>
+    }
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <div class="alert @(_isError ? "alert-danger" : "alert-success") mt-3">@_message</div>
+    }
+}
+
+@code {
+    private IReadOnlyList<ProductDto>? _products;
+    private readonly Dictionary<ProductDto, int> _cart = new();
+    private string _customer = "";
+    private bool _placing;
+    private string? _message;
+    private bool _isError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _products = await Catalog.GetProductsAsync();
+    }
+
+    private void AddToCart(ProductDto product)
+    {
+        _cart[product] = _cart.TryGetValue(product, out var qty) ? qty + 1 : 1;
+        _message = null;
+    }
+
+    private async Task PlaceOrder()
+    {
+        if (string.IsNullOrWhiteSpace(_customer))
+        {
+            _message = "Please enter a customer name.";
+            _isError = true;
+            return;
+        }
+
+        _placing = true;
+        var order = new CreateOrderDto(
+            _customer,
+            _cart.Select(c => new OrderLineDto(c.Key.Id, c.Value)).ToList());
+
+        var (success, error) = await Ordering.CreateOrderAsync(order);
+        _placing = false;
+
+        if (success)
+        {
+            _message = "Order placed successfully!";
+            _isError = false;
+            _cart.Clear();
+            _customer = "";
+        }
+        else
+        {
+            _message = $"Failed to place order: {error}";
+            _isError = true;
+        }
+    }
+}

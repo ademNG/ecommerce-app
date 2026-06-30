@@ -1,0 +1,13 @@
+/Users/bassembenhamed/Desktop/Odoo_Ops/ecommerce-app/src/ECommerce.ServiceDefaults/bin/Release/net10.0/ECommerce.ServiceDefaults.deps.json
+/Users/bassembenhamed/Desktop/Odoo_Ops/ecommerce-app/src/ECommerce.ServiceDefaults/bin/Release/net10.0/ECommerce.ServiceDefaults.dll
+/Users/bassembenhamed/Desktop/Odoo_Ops/ecommerce-app/src/ECommerce.ServiceDefaults/bin/Release/net10.0/ECommerce.ServiceDefaults.pdb
+/Users/bassembenhamed/Desktop/Odoo_Ops/ecommerce-app/src/ECommerce.ServiceDefaults/obj/Release/net10.0/ECommerce.ServiceDefaults.csproj.AssemblyReference.cache
+/Users/bassembenhamed/Desktop/Odoo_Ops/ecommerce-app/src/ECommerce.ServiceDefaults/obj/Release/net10.0/ECommerce.ServiceDefaults.GeneratedMSBuildEditorConfig.editorconfig
+/Users/bassembenhamed/Desktop/Odoo_Ops/ecommerce-app/src/ECommerce.ServiceDefaults/obj/Release/net10.0/ECommerce.ServiceDefaults.AssemblyInfoInputs.cache
+/Users/bassembenhamed/Desktop/Odoo_Ops/ecommerce-app/src/ECommerce.ServiceDefaults/obj/Release/net10.0/ECommerce.ServiceDefaults.AssemblyInfo.cs
+/Users/bassembenhamed/Desktop/Odoo_Ops/ecommerce-app/src/ECommerce.ServiceDefaults/obj/Release/net10.0/ECommerce.ServiceDefaults.csproj.CoreCompileInputs.cache
+/Users/bassembenhamed/Desktop/Odoo_Ops/ecommerce-app/src/ECommerce.ServiceDefaults/obj/Release/net10.0/ECommerce.ServiceDefaults.sourcelink.json
+/Users/bassembenhamed/Desktop/Odoo_Ops/ecommerce-app/src/ECommerce.ServiceDefaults/obj/Release/net10.0/ECommerce.ServiceDefaults.dll
+/Users/bassembenhamed/Desktop/Odoo_Ops/ecommerce-app/src/ECommerce.ServiceDefaults/obj/Release/net10.0/refint/ECommerce.ServiceDefaults.dll
+/Users/bassembenhamed/Desktop/Odoo_Ops/ecommerce-app/src/ECommerce.ServiceDefaults/obj/Release/net10.0/ECommerce.ServiceDefaults.pdb
+/Users/bassembenhamed/Desktop/Odoo_Ops/ecommerce-app/src/ECommerce.ServiceDefaults/obj/Release/net10.0/ref/ECommerce.ServiceDefaults.dll
